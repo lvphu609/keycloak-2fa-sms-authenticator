@@ -1,4 +1,4 @@
-package dasniko.keycloak.authenticator.gateway;
+package io.hitatek.keycloak.authenticator.gateway;
 
 import org.jboss.logging.Logger;
 

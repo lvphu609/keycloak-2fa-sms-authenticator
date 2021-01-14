@@ -1,4 +1,4 @@
-package dasniko.keycloak.authenticator.gateway;
+package io.hitatek.keycloak.authenticator.gateway;
 
 import java.util.Map;
 

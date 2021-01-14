@@ -1,4 +1,4 @@
-package dasniko.keycloak.authenticator;
+package io.hitatek.keycloak.authenticator;
 
 import org.keycloak.Config;
 import org.keycloak.authentication.Authenticator;
@@ -9,7 +9,6 @@ import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.provider.ServerInfoAwareProviderFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

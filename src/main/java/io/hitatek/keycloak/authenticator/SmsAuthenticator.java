@@ -1,6 +1,6 @@
-package dasniko.keycloak.authenticator;
+package io.hitatek.keycloak.authenticator;
 
-import dasniko.keycloak.authenticator.gateway.SmsServiceFactory;
+import io.hitatek.keycloak.authenticator.gateway.SmsServiceFactory;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;

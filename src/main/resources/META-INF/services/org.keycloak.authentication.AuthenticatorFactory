@@ -1,1 +1,1 @@
-dasniko.keycloak.authenticator.SmsAuthenticatorFactory
+io.hitatek.keycloak.authenticator.SmsAuthenticatorFactory
