@@ -1,9 +1,12 @@
 package io.hitatek.keycloak.authenticator;
 
 import io.hitatek.keycloak.authenticator.gateway.SmsServiceFactory;
+import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
+import org.keycloak.email.DefaultEmailSenderProvider;
+import org.keycloak.email.EmailException;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.KeycloakSession;
@@ -22,15 +25,21 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SmsAuthenticator implements Authenticator {
 
 	private static final String TPL_CODE = "login-sms.ftl";
+	private static final Logger logger = Logger.getLogger(SmsAuthenticatorFactory.class);
+	private static final String CODE_SENDER_EMAIL = "email";
+	private static final String CODE_SENDER_SMS = "sms";
 
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {
+		String choosingCodeSender = context.getHttpRequest().getDecodedFormParameters().getFirst("sender");
+
+		if (logger.isInfoEnabled()) {
+			logger.info("value of sender is: " + choosingCodeSender);
+		}
+
 		AuthenticatorConfigModel config = context.getAuthenticatorConfig();
 		KeycloakSession session = context.getSession();
 		UserModel user = context.getUser();
-
-		String mobileNumber = user.getFirstAttribute("mobile_number");
-		// mobileNumber of course has to be further validated on proper format, country code, ...
 
 		int length = Integer.parseInt(config.getConfig().get("length"));
 		int ttl = Integer.parseInt(config.getConfig().get("ttl"));
@@ -46,7 +55,11 @@ public class SmsAuthenticator implements Authenticator {
 			String smsAuthText = theme.getMessages(locale).getProperty("smsAuthText");
 			String smsText = String.format(smsAuthText, code, Math.floorDiv(ttl, 60));
 
-			SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
+			if(CODE_SENDER_EMAIL.equals(choosingCodeSender)){
+				sendCodeThroughEmail(session, user, smsText);
+			}else if(CODE_SENDER_SMS.equals(choosingCodeSender)){
+				sendCodeThroughSMS(config, user, smsText);
+			}
 
 			context.challenge(context.form().setAttribute("realm", context.getRealm()).createForm(TPL_CODE));
 		} catch (Exception e) {
@@ -54,6 +67,23 @@ public class SmsAuthenticator implements Authenticator {
 				context.form().setError("smsAuthSmsNotSent", e.getMessage())
 					.createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
 		}
+	}
+
+	private void sendCodeThroughSMS(AuthenticatorConfigModel config, UserModel user, String smsText) {
+		String mobileNumber = user.getFirstAttribute("mobile_number");
+		// mobileNumber of course has to be further validated on proper format, country code, ...
+		SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
+	}
+
+	private void sendCodeThroughEmail(KeycloakSession session, UserModel user, String smsText) throws EmailException {
+		DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+		senderProvider.send(
+			session.getContext().getRealm().getSmtpConfig(),
+			user,
+			"Reset Password Code",
+			smsText,
+			smsText
+		);
 	}
 
 	@Override
