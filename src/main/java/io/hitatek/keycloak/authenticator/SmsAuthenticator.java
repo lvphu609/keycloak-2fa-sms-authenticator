@@ -1,7 +1,6 @@
 package io.hitatek.keycloak.authenticator;
 
 import io.hitatek.keycloak.authenticator.gateway.SmsServiceFactory;
-import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
@@ -25,17 +24,12 @@ import java.util.concurrent.ThreadLocalRandom;
 public class SmsAuthenticator implements Authenticator {
 
 	private static final String TPL_CODE = "login-sms.ftl";
-	private static final Logger logger = Logger.getLogger(SmsAuthenticatorFactory.class);
 	private static final String CODE_SENDER_EMAIL = "email";
 	private static final String CODE_SENDER_SMS = "sms";
 
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {
 		String choosingCodeSender = context.getHttpRequest().getDecodedFormParameters().getFirst("sender");
-
-		if (logger.isInfoEnabled()) {
-			logger.info("value of sender is: " + choosingCodeSender);
-		}
 
 		AuthenticatorConfigModel config = context.getAuthenticatorConfig();
 		KeycloakSession session = context.getSession();
@@ -71,19 +65,24 @@ public class SmsAuthenticator implements Authenticator {
 
 	private void sendCodeThroughSMS(AuthenticatorConfigModel config, UserModel user, String smsText) {
 		String mobileNumber = user.getFirstAttribute("mobile_number");
-		// mobileNumber of course has to be further validated on proper format, country code, ...
-		SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
+		if(!mobileNumber.isEmpty() && mobileNumber != null) {
+			mobileNumber = mobileNumber.replaceFirst("0", "+84");
+			SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
+		}
 	}
 
 	private void sendCodeThroughEmail(KeycloakSession session, UserModel user, String smsText) throws EmailException {
-		DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
-		senderProvider.send(
-			session.getContext().getRealm().getSmtpConfig(),
-			user,
-			"Reset Password Code",
-			smsText,
-			smsText
-		);
+		String email = user.getEmail();
+		if(!email.isEmpty() && email != null) {
+			DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
+			senderProvider.send(
+				session.getContext().getRealm().getSmtpConfig(),
+				user,
+				"Reset Password Code",
+				smsText,
+				smsText
+			);
+		}
 	}
 
 	@Override
