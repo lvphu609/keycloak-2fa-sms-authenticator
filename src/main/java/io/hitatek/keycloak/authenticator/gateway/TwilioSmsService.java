@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public class TwilioSmsService implements SmsService {
-	private static final String ACCOUNT_SID = "ACCOUNT_SID";
-	private static final String AUTH_TOKEN = "AUTH_TOKEN";
-	private static final String PHONE_NUMBER = "PHONE_NUMBER_FROM";
+	private static final String ACCOUNT_SID = System.getenv("TWILIO_ACCOUNT_SID");
+	private static final String AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN");
+	private static final String PHONE_NUMBER = System.getenv("TWILIO_PHONE_NUMBER");
 
 	TwilioSmsService(Map<String, String> config) {
 		//TODO
