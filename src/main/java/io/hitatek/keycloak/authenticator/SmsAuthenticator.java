@@ -31,6 +31,8 @@ public class SmsAuthenticator implements Authenticator {
 	public void authenticate(AuthenticationFlowContext context) {
 		String choosingCodeSender = context.getHttpRequest().getDecodedFormParameters().getFirst("sender");
 
+		System.out.println("choose method to send forgot password code: " + choosingCodeSender);
+
 		AuthenticatorConfigModel config = context.getAuthenticatorConfig();
 		KeycloakSession session = context.getSession();
 		UserModel user = context.getUser();
@@ -65,7 +67,7 @@ public class SmsAuthenticator implements Authenticator {
 
 	private void sendCodeThroughSMS(AuthenticatorConfigModel config, UserModel user, String smsText) {
 		String mobileNumber = user.getFirstAttribute("mobile_number");
-		if(!mobileNumber.isEmpty() && mobileNumber != null) {
+		if(mobileNumber != null && !mobileNumber.isEmpty()) {
 			mobileNumber = mobileNumber.replaceFirst("0", "+84");
 			SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
 		}
@@ -73,7 +75,7 @@ public class SmsAuthenticator implements Authenticator {
 
 	private void sendCodeThroughEmail(KeycloakSession session, UserModel user, String smsText) throws EmailException {
 		String email = user.getEmail();
-		if(!email.isEmpty() && email != null) {
+		if(email != null && !email.isEmpty()) {
 			DefaultEmailSenderProvider senderProvider = new DefaultEmailSenderProvider(session);
 			senderProvider.send(
 				session.getContext().getRealm().getSmtpConfig(),
@@ -129,7 +131,12 @@ public class SmsAuthenticator implements Authenticator {
 
 	@Override
 	public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
-		return user.getFirstAttribute("mobile_number") != null;
+		try{
+			return user.getFirstAttribute("mobile_number") != null;
+		}catch (Exception e){
+			System.out.println(e.getMessage());
+			return false;
+		}
 	}
 
 	@Override
